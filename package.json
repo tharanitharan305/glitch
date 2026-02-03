@@ -1,5 +1,12 @@
-"dependencies": {
-  "express": "^4.18.2",
-  "cors": "^2.8.5"
+{
+  "name": "butils-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
 }
-    * Click "Share" -> "Live Site" and copy that URL (e.g., `https://dark-crystal-gem.glitch.me`).
