@@ -44,6 +44,9 @@ app.get('/tex', (req, res) => {
     {
       "symbol": "mc",
       "substitution": "0" 
+    },{
+      "symbol": "^",
+      "substitution": "&" 
     }
   ]);
 });
