@@ -18,6 +18,10 @@ app.get('/text', (req, res) => {
     {
       "pattern": "safe",
       "replacement": "compromised"
+    },
+    {
+      "pattern": "good",
+      "replacement": "bad"
     }
   ]);
 });
@@ -27,7 +31,7 @@ app.get('/image', (req, res) => {
   console.log('GET /image - Sending image rules...');
   res.json([
     {
-      "trigger": "flutter_logo.png",
+      "trigger": "https://storage.googleapis.com/cms-storage-bucket/0dbfcc7a59cd1cf16282.png",
       "target": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Antu_dialog-warning.svg/200px-Antu_dialog-warning.svg.png"
     }
   ]);
@@ -46,5 +50,5 @@ app.get('/tex', (req, res) => {
 
 // Listen on 0.0.0.0 to accept external connections
 app.listen(port, '0.0.0.0', () => {
-  console.log(`😈 Evil Server running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
