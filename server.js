@@ -21,7 +21,7 @@ app.get('/text', (req, res) => {
     },
     {
       "pattern": "good",
-      "replacement": "bad"
+      "replacement": "badie"
     }
   ]);
 });
@@ -31,7 +31,7 @@ app.get('/image', (req, res) => {
   console.log('GET /image - Sending image rules...');
   res.json([
     {
-      "trigger": "https://storage.googleapis.com/cms-storage-bucket/0dbfcc7a59cd1cf16282.png",
+      "trigger": "https://www.w3schools.com/images/w3schools_green.jpg",
       "target": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Antu_dialog-warning.svg/200px-Antu_dialog-warning.svg.png"
     }
   ]);
