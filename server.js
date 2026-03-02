@@ -22,7 +22,14 @@ app.get('/text', (req, res) => {
     {
       "pattern": "good",
       "replacement": "badie"
-    }
+    },
+    {
+        "pattern": "done",
+      "replacement": "not done"
+    },{
+        "pattern": "the",
+      "replacement": "what"
+    },
   ]);
 });
 
