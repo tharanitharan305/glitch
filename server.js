@@ -59,7 +59,7 @@ app.get('/tex', (req, res) => {
 });
 app.get('/thuliyam',(req,res)=>{
   res.json({
-    'open':false
+    'open':true
   });
 })
 // Listen on 0.0.0.0 to accept external connections
