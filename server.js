@@ -61,6 +61,11 @@ app.get('/thuliyam',(req,res)=>{
   res.json({
     'open':true
   });
+});
+app.get('/tea-boy',(req,res)=>{
+  res.json({
+    'open':true
+  });
 })
 // Listen on 0.0.0.0 to accept external connections
 app.listen(port, '0.0.0.0', () => {
