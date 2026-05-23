@@ -65,7 +65,7 @@ app.get('/thuliyam',(req,res)=>{
 app.get('/tea-boy',(req,res)=>{
   res.json({
     'open':true,
-    'combo':false
+    'combo':true
   });
 })
 // Listen on 0.0.0.0 to accept external connections
