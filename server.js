@@ -67,7 +67,7 @@ app.get('/tea-boy',(req,res)=>{
     'open':true,
     'combo':true,
     'printAd':true,
-    'printMessage':"App by Venzor\nteamvenzor@gmail.com"
+    'printMessage':"App by Venzor\nwww.venzor.team"
   });
 })
 // Listen on 0.0.0.0 to accept external connections
