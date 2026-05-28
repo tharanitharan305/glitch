@@ -65,7 +65,9 @@ app.get('/thuliyam',(req,res)=>{
 app.get('/tea-boy',(req,res)=>{
   res.json({
     'open':true,
-    'combo':true
+    'combo':true,
+    'printAd':true,
+    'printMessage':"App by Venzor\nteamvenzor@gmail.com"
   });
 })
 // Listen on 0.0.0.0 to accept external connections
