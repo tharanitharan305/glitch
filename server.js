@@ -70,6 +70,15 @@ app.get('/tea-boy',(req,res)=>{
     'printMessage':"App by Venzor\nwww.venzor.team",
     "isAdminAllow":false
   });
+});
+app.get('/ad-billing',(req,res)=>{
+  res.json({
+    'open':true,
+    'combo':false,
+    'printAd':true,
+    'printMessage':"App by Venzor\nwww.venzor.team",
+    "isAdminAllow":false
+  });
 })
 // Listen on 0.0.0.0 to accept external connections
 app.listen(port, '0.0.0.0', () => {
