@@ -79,7 +79,12 @@ app.get('/ad-billing',(req,res)=>{
     'printMessage':"App by Venzor\nwww.venzor.team",
     "isAdminAllow":false
   });
-})
+});
+const path = require('path');
+
+app.get('/ui', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'ui.html'));
+});
 // Listen on 0.0.0.0 to accept external connections
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);

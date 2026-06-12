@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Glitch API — Route Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #07090f;
+    --surface:   #0e1424;
+    --card:      #131929;
+    --border:    #1e2d4a;
+    --border2:   #263451;
+    --accent:    #00c8f0;
+    --accent2:   #0076ff;
+    --success:   #00e0a0;
+    --danger:    #ff4d6a;
+    --warn:      #ffb347;
+    --text:      #dce8f5;
+    --muted:     #5a7090;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Inter', sans-serif;
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; }
+
+  /* ── Layout ── */
+  .shell { display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px; min-width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 20px 18px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
+  .logo-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .logo-text { font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--text); }
+  .base-url { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 2px; word-break: break-all; }
+
+  .route-list { flex: 1; overflow-y: auto; padding: 10px 8px; }
+  .route-list::-webkit-scrollbar { width: 4px; }
+  .route-list::-webkit-scrollbar-track { background: transparent; }
+  .route-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  .route-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 10px; border-radius: 7px; cursor: pointer;
+    margin-bottom: 3px; transition: background .15s;
+    border: 1px solid transparent;
+  }
+  .route-item:hover { background: var(--card); }
+  .route-item.active { background: rgba(0,200,240,.08); border-color: rgba(0,200,240,.25); }
+  .route-item.active .ri-name { color: var(--accent); }
+  .ri-name { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text); }
+  .ri-badge {
+    font-size: 9px; font-weight: 600; padding: 2px 6px;
+    border-radius: 999px; background: rgba(0,200,240,.12); color: var(--accent);
+    letter-spacing: .04em;
+  }
+
+  .add-route-btn {
+    margin: 10px 8px 14px;
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 12px; border-radius: 7px; cursor: pointer;
+    border: 1px dashed var(--border2); background: transparent;
+    color: var(--muted); font-family: var(--sans); font-size: 12px;
+    transition: all .15s;
+  }
+  .add-route-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,200,240,.05); }
+
+  /* Main area */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar {
+    height: 52px; min-height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .method-badge {
+    background: rgba(0,200,240,.15); color: var(--accent);
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    padding: 3px 8px; border-radius: 4px; letter-spacing: .06em;
+  }
+  .route-path-label { font-family: var(--mono); font-size: 13px; color: var(--text); font-weight: 500; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 7px; font-family: var(--sans);
+    font-size: 12px; font-weight: 600; cursor: pointer; border: none;
+    transition: all .15s; letter-spacing: .02em;
+  }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border2); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border); }
+  .btn-danger { background: rgba(255,77,106,.1); color: var(--danger); border: 1px solid rgba(255,77,106,.25); }
+  .btn-danger:hover { background: rgba(255,77,106,.18); }
+  .btn-primary { background: var(--accent); color: #07090f; border: none; }
+  .btn-primary:hover { background: #22deff; box-shadow: 0 0 16px rgba(0,200,240,.35); }
+
+  /* Content */
+  .content { flex: 1; overflow: hidden; display: flex; gap: 0; }
+
+  /* Editor */
+  .editor-pane {
+    flex: 1; overflow-y: auto; padding: 24px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .editor-pane::-webkit-scrollbar { width: 5px; }
+  .editor-pane::-webkit-scrollbar-track { background: transparent; }
+  .editor-pane::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  /* Preview */
+  .preview-pane {
+    width: 320px; min-width: 320px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .preview-header {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .preview-title { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+  .preview-live { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--success); font-weight: 600; }
+  .preview-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 1.5s infinite; }
+  .preview-code {
+    flex: 1; overflow-y: auto; padding: 16px 18px;
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.7;
+    color: #a8c4e0; white-space: pre-wrap; word-break: break-word;
+  }
+  .preview-code::-webkit-scrollbar { width: 4px; }
+  .preview-code::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  .copy-url-btn {
+    margin: 12px 18px 14px; padding: 9px;
+    background: rgba(0,200,240,.07); border: 1px solid rgba(0,200,240,.2);
+    border-radius: 7px; color: var(--accent); font-family: var(--mono); font-size: 10px;
+    cursor: pointer; text-align: center; transition: all .15s;
+    word-break: break-all;
+  }
+  .copy-url-btn:hover { background: rgba(0,200,240,.14); }
+
+  /* Section cards */
+  .section-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .section-head {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-title { font-size: 12px; font-weight: 600; color: var(--text); letter-spacing: .04em; }
+  .section-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* Field rows */
+  .field-row { display: flex; align-items: center; gap: 10px; }
+  .field-label { font-size: 11px; color: var(--muted); width: 90px; min-width: 90px; font-weight: 500; }
+  .field-input {
+    flex: 1; background: var(--bg); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 7px 10px;
+    font-family: var(--mono); font-size: 12px; color: var(--text);
+    outline: none; transition: border-color .15s;
+  }
+  .field-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,200,240,.1); }
+
+  .toggle-row { display: flex; align-items: center; gap: 10px; }
+  .toggle-label { font-size: 12px; color: var(--text); flex: 1; }
+  .toggle-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .toggle {
+    position: relative; width: 36px; height: 20px;
+    flex-shrink: 0;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0;
+    background: var(--border2); border-radius: 20px; cursor: pointer;
+    transition: background .2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 14px; height: 14px; border-radius: 50%;
+    left: 3px; top: 3px; background: var(--muted);
+    transition: transform .2s, background .2s;
+  }
+  .toggle input:checked + .toggle-slider { background: rgba(0,200,240,.25); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(16px); background: var(--accent); }
+
+  /* Attribute list */
+  .attr-list { display: flex; flex-direction: column; gap: 8px; }
+  .attr-item {
+    display: grid; grid-template-columns: 1fr 1fr auto;
+    gap: 8px; align-items: center;
+  }
+  .attr-key { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+  .remove-btn {
+    width: 28px; height: 28px; border-radius: 6px; border: none;
+    background: transparent; color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; font-size: 14px;
+  }
+  .remove-btn:hover { background: rgba(255,77,106,.12); color: var(--danger); }
+
+  .add-attr-btn {
+    display: flex; align-items: center; gap: 6px; padding: 7px 12px;
+    background: transparent; border: 1px dashed var(--border2);
+    border-radius: 6px; color: var(--muted); font-size: 11px;
+    cursor: pointer; transition: all .15s; font-family: var(--sans);
+    width: 100%;
+  }
+  .add-attr-btn:hover { border-color: var(--success); color: var(--success); background: rgba(0,224,160,.05); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 12px 18px;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    transform: translateY(20px); opacity: 0;
+    transition: all .25s; pointer-events: none; z-index: 9999;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-icon { font-size: 16px; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 999; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border2);
+    border-radius: 12px; padding: 24px; width: 380px;
+    transform: translateY(16px); transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+  /* Empty state */
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: var(--muted); gap: 10px;
+  }
+  .empty-icon { font-size: 40px; opacity: .4; }
+  .empty-text { font-size: 13px; }
+
+  /* JSON syntax highlight */
+  .json-key { color: #7eb8f7; }
+  .json-str { color: #a8d8a0; }
+  .json-bool { color: #ffb347; }
+  .json-num { color: #c3a0e8; }
+
+  @media(max-width: 900px){
+    .preview-pane { display: none; }
+    .sidebar { width: 200px; min-width: 200px; }
+  }
+  @media(max-width: 650px){
+    .sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-dot"></div>
+        <span class="logo-text">GLITCH API</span>
+      </div>
+      <div class="base-url">glitch-jade.vercel.app</div>
+    </div>
+    <div class="route-list" id="routeList"></div>
+    <button class="add-route-btn" onclick="openAddModal()">
+      <span>＋</span> New Route
+    </button>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="method-badge">GET</span>
+        <span class="route-path-label" id="currentRoutePath">/tea-boy</span>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-danger" onclick="deleteCurrentRoute()" id="deleteBtn">✕ Delete</button>
+        <button class="btn btn-ghost" onclick="resetRoute()">↺ Reset</button>
+        <button class="btn btn-primary" onclick="copyURL()">⎘ Copy URL</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Editor -->
+      <div class="editor-pane" id="editorPane">
+        <div class="empty-state" id="emptyState" style="display:none">
+          <div class="empty-icon">⚡</div>
+          <div class="empty-text">Select a route to edit</div>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="preview-pane">
+        <div class="preview-header">
+          <span class="preview-title">JSON Response</span>
+          <div class="preview-live"><div class="preview-live-dot"></div>LIVE</div>
+        </div>
+        <div class="preview-code" id="previewCode"></div>
+        <div class="copy-url-btn" id="copyUrlBox" onclick="copyURL()" title="Click to copy">
+          📋 https://glitch-jade.vercel.app<span id="previewPath">/tea-boy</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Route Modal -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-title">New Route</div>
+    <div class="field-row" style="margin-bottom:10px">
+      <span class="field-label">Path</span>
+      <input class="field-input" id="newRoutePath" placeholder="/my-route" style="flex:1"/>
+    </div>
+    <div style="font-size:11px; color:var(--muted); margin-left:100px">
+      Starts with /  ·  No spaces
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddRoute()">Create Route</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✓</span>
+  <span id="toastMsg">Copied!</span>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────
+const BASE = 'https://glitch-jade.vercel.app';
+
+const DEFAULTS = {
+  '/tea-boy':   { open: true,  combo: false, printAd: true,  printMessage: 'App by Venzor\nwww.venzor.team', isAdminAllow: false },
+  '/ad-billing':{ open: true,  combo: false, printAd: true,  printMessage: 'App by Venzor\nwww.venzor.team', isAdminAllow: false },
+  '/thuliyam':  { open: true },
+};
+
+// Clone to working state
+let routes = JSON.parse(JSON.stringify(DEFAULTS));
+let currentRoute = '/tea-boy';
+
+// ─── RENDER ──────────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('routeList');
+  list.innerHTML = '';
+  Object.keys(routes).forEach(path => {
+    const item = document.createElement('div');
+    item.className = 'route-item' + (path === currentRoute ? ' active' : '');
+    item.innerHTML = `
+      <span class="ri-name">${path}</span>
+      <span class="ri-badge">GET</span>
+    `;
+    item.onclick = () => selectRoute(path);
+    list.appendChild(item);
+  });
+}
+
+function selectRoute(path) {
+  currentRoute = path;
+  renderSidebar();
+  renderEditor();
+  renderPreview();
+  document.getElementById('currentRoutePath').textContent = path;
+  document.getElementById('previewPath').textContent = path;
+}
+
+function renderEditor() {
+  const pane = document.getElementById('editorPane');
+  const data = routes[currentRoute];
+  if (!data) { pane.innerHTML = '<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-text">Route not found</div></div>'; return; }
+
+  // Separate booleans, strings, and custom attrs
+  const booleans  = Object.entries(data).filter(([k,v]) => typeof v === 'boolean');
+  const strings   = Object.entries(data).filter(([k,v]) => typeof v === 'string');
+  const others    = Object.entries(data).filter(([k,v]) => typeof v !== 'boolean' && typeof v !== 'string');
+
+  pane.innerHTML = `
+    ${booleans.length ? `
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-title">Toggles</span>
+      </div>
+      <div class="section-body" id="togglesBody">
+        ${booleans.map(([k,v]) => `
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">${k}</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" ${v ? 'checked' : ''} data-key="${k}" data-type="bool" onchange="updateField('${k}', this.checked, 'bool')"/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    ${strings.length ? `
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-title">Text Fields</span>
+      </div>
+      <div class="section-body">
+        ${strings.map(([k,v]) => `
+          <div class="field-row">
+            <span class="field-label">${k}</span>
+            <input class="field-input" value="${escHtml(v)}" data-key="${k}" oninput="updateField('${k}', this.value, 'string')"/>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    ${others.length ? `
+    <div class="section-card">
+      <div class="section-head"><span class="section-title">Other Fields</span></div>
+      <div class="section-body">
+        ${others.map(([k,v]) => `
+          <div class="field-row">
+            <span class="field-label">${k}</span>
+            <input class="field-input" value="${escHtml(String(v))}" data-key="${k}" oninput="updateField('${k}', this.value, 'auto')"/>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Custom Attributes -->
+    <div class="section-card">
+      <div class="section-head">
+        <span class="section-title">Custom Attributes</span>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="addAttr()">＋ Add</button>
+      </div>
+      <div class="section-body">
+        <div class="attr-list" id="attrList">
+          ${renderCustomAttrs(data)}
+        </div>
+        <button class="add-attr-btn" onclick="addAttr()">＋ Add attribute</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderCustomAttrs(data) {
+  // Show only keys that were dynamically added (not in defaults for this route)
+  const def = DEFAULTS[currentRoute] || {};
+  const custom = Object.entries(data).filter(([k]) => !(k in def));
+  if (!custom.length) return '<div style="color:var(--muted);font-size:11px;padding:4px 0">No custom attributes yet</div>';
+  return custom.map(([k, v]) => `
+    <div class="attr-item">
+      <input class="field-input attr-key" value="${escHtml(k)}" placeholder="key" oninput="renameAttr('${k}', this.value)"/>
+      <input class="field-input" value="${escHtml(String(v))}" placeholder="value" oninput="updateField('${k}', this.value, 'auto')"/>
+      <button class="remove-btn" onclick="removeAttr('${k}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderPreview() {
+  const data = routes[currentRoute];
+  document.getElementById('previewCode').innerHTML = syntaxHL(JSON.stringify(data, null, 2));
+}
+
+function syntaxHL(json) {
+  return json
+    .replace(/("[\w]+")\s*:/g, '<span class="json-key">$1</span>:')
+    .replace(/:\s*(".*?")/g, ': <span class="json-str">$1</span>')
+    .replace(/:\s*(true|false)/g, ': <span class="json-bool">$1</span>')
+    .replace(/:\s*(\d+\.?\d*)/g, ': <span class="json-num">$1</span>');
+}
+
+// ─── MUTATIONS ───────────────────────────────────────────────
+function updateField(key, value, type) {
+  if (type === 'bool') routes[currentRoute][key] = value;
+  else if (type === 'string') routes[currentRoute][key] = value;
+  else {
+    // auto: detect type
+    if (value === 'true') routes[currentRoute][key] = true;
+    else if (value === 'false') routes[currentRoute][key] = false;
+    else if (!isNaN(value) && value !== '') routes[currentRoute][key] = Number(value);
+    else routes[currentRoute][key] = value;
+  }
+  renderPreview();
+}
+
+function addAttr() {
+  const key = 'newKey_' + Date.now().toString(36);
+  routes[currentRoute][key] = '';
+  renderEditor();
+  renderPreview();
+  // Focus the new key input
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.attr-key');
+    if (inputs.length) inputs[inputs.length-1].focus();
+  }, 50);
+}
+
+function renameAttr(oldKey, newKey) {
+  if (!newKey || newKey === oldKey) return;
+  const data = routes[currentRoute];
+  const val = data[oldKey];
+  const newObj = {};
+  Object.entries(data).forEach(([k,v]) => {
+    newObj[k === oldKey ? newKey : k] = v;
+  });
+  routes[currentRoute] = newObj;
+  renderPreview();
+}
+
+function removeAttr(key) {
+  delete routes[currentRoute][key];
+  renderEditor();
+  renderPreview();
+  toast('Attribute removed', '🗑');
+}
+
+function deleteCurrentRoute() {
+  const keys = Object.keys(routes);
+  if (keys.length <= 1) { toast('Cannot delete the last route', '⚠️'); return; }
+  delete routes[currentRoute];
+  currentRoute = Object.keys(routes)[0];
+  renderSidebar();
+  selectRoute(currentRoute);
+  toast('Route deleted', '🗑');
+}
+
+function resetRoute() {
+  if (DEFAULTS[currentRoute]) {
+    routes[currentRoute] = JSON.parse(JSON.stringify(DEFAULTS[currentRoute]));
+    renderEditor();
+    renderPreview();
+    toast('Route reset to default', '↺');
+  } else {
+    toast('No default to reset to', '⚠️');
+  }
+}
+
+function copyURL() {
+  const url = BASE + currentRoute;
+  navigator.clipboard.writeText(url).then(() => toast('URL copied!', '⎘'));
+}
+
+// ─── ADD ROUTE MODAL ────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('addModal').classList.add('open');
+  document.getElementById('newRoutePath').value = '/';
+  setTimeout(() => document.getElementById('newRoutePath').focus(), 100);
+}
+function closeAddModal() {
+  document.getElementById('addModal').classList.remove('open');
+}
+function confirmAddRoute() {
+  let path = document.getElementById('newRoutePath').value.trim();
+  if (!path.startsWith('/')) path = '/' + path;
+  if (routes[path]) { toast('Route already exists', '⚠️'); return; }
+  if (path === '/') { toast('Path cannot be /', '⚠️'); return; }
+  routes[path] = { open: true };
+  closeAddModal();
+  renderSidebar();
+  selectRoute(path);
+  toast('Route created', '✓');
+}
+
+// ─── TOAST ──────────────────────────────────────────────────
+function toast(msg, icon = '✓') {
+  const el = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastIcon').textContent = icon;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ─── UTIL ───────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── INIT ───────────────────────────────────────────────────
+document.getElementById('addModal').addEventListener('click', function(e) {
+  if (e.target === this) closeAddModal();
+});
+document.getElementById('newRoutePath').addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmAddRoute();
+  if (e.key === 'Escape') closeAddModal();
+});
+
+renderSidebar();
+selectRoute(currentRoute);
+</script>
+</body>
+</html>
