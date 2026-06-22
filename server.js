@@ -77,7 +77,8 @@ app.get('/ad-billing',(req,res)=>{
     'combo':false,
     'printAd':true,
     'printMessage':"App by Venzor\nwww.venzor.team",
-    "isAdminAllow":false
+    "isAdminAllow":false,
+    "idCustomeDate":true
   });
 });
 const path = require('path');
