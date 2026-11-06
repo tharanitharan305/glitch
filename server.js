@@ -64,7 +64,7 @@ app.get('/thuliyam',(req,res)=>{
 });
 app.get('/tea-boy',(req,res)=>{
   res.json({
-    'open':true,
+    'open':false,
     'combo':false,
     'printAd':true,
     'printMessage':"App by Venzor\nwww.venzor.team",
