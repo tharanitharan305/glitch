@@ -73,7 +73,7 @@ app.get('/tea-boy',(req,res)=>{
 });
 app.get('/ad-billing',(req,res)=>{
   res.json({
-    'open':true,
+    'open':false,
     'combo':false,
     'printAd':true,
     'printMessage':"App by Venzor\nwww.venzor.team",
